@@ -53,12 +53,15 @@ func NewWatchCommand() *WatchCommand {
 
 func (w *WatchCommand) validate() error {
 	flag.Parse()
+	if w.options.WfqLogPath == "" {
+		return fmt.Errorf("wfqlog is required")
+	}
 	for _, token := range w.options.DingTokens {
 		dingbot := messenger.NewDingBot(token)
 		w.messengers = append(w.messengers, dingbot)
 		logrus.Infof("add messenger: %s", dingbot)
 	}
-	w.watchDir = w.options.Path
+	w.watchDir = w.options.WfqLogPath
 	return nil
 }
 

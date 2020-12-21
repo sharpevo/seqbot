@@ -17,15 +17,15 @@ func (a *arrayFlag) Set(value string) error {
 }
 
 type Options struct {
-	Path       string
+	WfqLogPath string
 	DingTokens arrayFlag
 }
 
 func AttachOptions(cmd *flag.FlagSet) *Options {
 	options := &Options{}
 	cmd.StringVar(
-		&options.Path,
-		"dir",
+		&options.WfqLogPath,
+		"wfqlog",
 		"",
 		"wfqlog path to watch",
 	)
