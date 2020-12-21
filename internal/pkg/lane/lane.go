@@ -57,6 +57,7 @@ func (l *Lane) Finish() error {
 	for i := len(lines) - 1; i >= 0; i-- {
 		if strings.HasPrefix(lines[i], l.ChipId) {
 			index = i
+			break
 		}
 	}
 	if index < 0 {
