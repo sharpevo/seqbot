@@ -2,6 +2,8 @@ package options
 
 import (
 	"flag"
+	"fmt"
+	"os"
 	"strings"
 )
 
@@ -34,5 +36,15 @@ func AttachOptions(cmd *flag.FlagSet) *Options {
 		"dingtoken",
 		"token of DingTalk robots",
 	)
+	flag.Usage = func() {
+		fmt.Fprintf(
+			flag.CommandLine.Output(),
+			"Usage of %s:\n  %s %s\n",
+			os.Args[0],
+			os.Args[0],
+			"-wfqlog=/path/to/wfqlog -dingtoken=token1 -dingtolken=token2",
+		)
+		flag.PrintDefaults()
+	}
 	return options
 }
