@@ -94,8 +94,8 @@ func (w *WatchCommand) watch() error {
 					if err != nil {
 						logrus.Errorf("failed to update: %s", err)
 					}
-					logrus.Debugf("message composed: %s", message)
 					w.send(message)
+					logrus.Infof("message sent: %s", message)
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
