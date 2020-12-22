@@ -92,6 +92,11 @@ func (w *WatchCommand) watch() error {
 					return
 				}
 				if event.Op&fsnotify.Create == fsnotify.Create {
+					if filepath.Ext(event.Name) != ".json" ||
+						strings.HasPrefix(filepath.Base(event.Name), ".") {
+						logrus.Debugf("ignore creation: %s", event.Name)
+						continue
+					}
 					message, err := w.update(event.Name, getChipId(event.Name))
 					if err != nil {
 						logrus.Errorf("failed to update: %s", err)
