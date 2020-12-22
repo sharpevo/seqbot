@@ -21,6 +21,7 @@ func (a *arrayFlag) Set(value string) error {
 type Options struct {
 	WfqLogPath string
 	DingTokens arrayFlag
+	Debug      bool
 }
 
 func AttachOptions(cmd *flag.FlagSet) *Options {
@@ -30,6 +31,12 @@ func AttachOptions(cmd *flag.FlagSet) *Options {
 		"wfqlog",
 		"",
 		"wfqlog path to watch",
+	)
+	cmd.BoolVar(
+		&options.Debug,
+		"debug",
+		false,
+		"show debug message",
 	)
 	cmd.Var(
 		&options.DingTokens,

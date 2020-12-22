@@ -64,6 +64,9 @@ func (w *WatchCommand) validate() error {
 		logrus.Infof("add messenger: %s", dingbot)
 	}
 	w.watchDir = w.options.WfqLogPath
+	if w.options.Debug {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
 	return nil
 }
 
