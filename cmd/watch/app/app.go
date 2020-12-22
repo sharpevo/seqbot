@@ -88,9 +88,7 @@ func (w *WatchCommand) watch() error {
 					return
 				}
 				if event.Op&fsnotify.Create == fsnotify.Create {
-					message, err := w.update(
-						filepath.Base(filepath.Dir(event.Name)),
-						getChipId(event.Name))
+					message, err := w.update(event.Name, getChipId(event.Name))
 					if err != nil {
 						logrus.Errorf("failed to update: %s", err)
 					}
@@ -117,8 +115,9 @@ func (w *WatchCommand) watch() error {
 	return nil
 }
 
-func (w *WatchCommand) update(dir string, chipId string) (string, error) {
+func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
 	message := ""
+	dir := filepath.Base(filepath.Dir(eventName))
 	switch dir {
 	case DIR_RUNNING:
 		l := lane.NewLane(chipId)
