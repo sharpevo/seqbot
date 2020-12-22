@@ -11,6 +11,7 @@ import (
 	"github.com/sharpevo/seqbot/cmd/watch/app/options"
 	"github.com/sharpevo/seqbot/internal/pkg/lane"
 	"github.com/sharpevo/seqbot/pkg/messenger"
+	"github.com/sharpevo/seqbot/pkg/util"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
@@ -130,7 +131,14 @@ func (w *WatchCommand) update(dir string, chipId string) (string, error) {
 		if err := l.Finish(); err != nil {
 			return message, err
 		}
-		return fmt.Sprintf("**%s**: WFQ completed, %s.", l.ChipId, l.Duration()), nil
+		count, size, err := util.FastqCountAndSize(
+			util.ResultPathFromWFQLogPath(w.options.WfqLogPath, chipId))
+		if err != nil {
+			return message, err
+		}
+		return fmt.Sprintf(
+			"**%s**: WFQ completed.\n- Time: %s\n- Count: %d\n- Size: %s",
+			l.ChipId, l.Duration(), count, size), nil
 	case DIR_FAIL:
 		l := lane.NewLane(chipId)
 		if err := l.Finish(); err != nil {
