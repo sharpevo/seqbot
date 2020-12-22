@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/sharpevo/seqbot/cmd/watch/app/options"
+	"github.com/sharpevo/seqbot/internal/pkg/flagjson"
 	"github.com/sharpevo/seqbot/internal/pkg/lane"
 	"github.com/sharpevo/seqbot/pkg/messenger"
 	"github.com/sharpevo/seqbot/pkg/util"
@@ -135,9 +136,13 @@ func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
 		if err != nil {
 			return message, err
 		}
+		f, err := flagjson.ReadFlag(eventName)
+		if err != nil {
+			return message, err
+		}
 		return fmt.Sprintf(
-			"**%s**: WFQ completed.\n- Time: %s\n- Count: %d\n- Size: %s",
-			l.ChipId, l.Duration(), count, size), nil
+			"**%s**: WFQ completed.\n- Barcode: %s\n- Time: %s\n- Count: %d\n- Size: %s",
+			l.ChipId, f.BarcodeType(), l.Duration(), count, size), nil
 	case DIR_FAIL:
 		l := lane.NewLane(chipId)
 		if err := l.Finish(); err != nil {
