@@ -74,7 +74,7 @@ func (l *Lane) Finish() error {
 		}
 		lines[index] = l.String()
 	default:
-		return fmt.Errorf("invalid lane to be done: %s", l.ChipId)
+		return fmt.Errorf("invalid lane to be done: %s, %s", l.ChipId, lines[index])
 	}
 	return saveLanes(lines)
 }
