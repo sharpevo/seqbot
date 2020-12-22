@@ -152,6 +152,10 @@ func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
 			"**%s**: WFQ completed.\n- Barcode: %s\n- Time: %s\n- Count: %d\n- Size: %s",
 			l.ChipId, f.BarcodeType(), l.Duration(), count, size), nil
 	case DIR_FAIL:
+		if w.isExistRunningOrDuplicateLane(eventName) {
+			logrus.Warnf("Not mark as fail for exist running or duplicate lane")
+			return fmt.Sprintf("**%s**: Job exists or duplicate lane.", chipId), nil
+		}
 		l := lane.NewLane(chipId)
 		if err := l.Finish(); err != nil {
 			return message, err
@@ -169,6 +173,14 @@ func (w *WatchCommand) send(message string) {
 			logrus.Errorf("failed to send message by %s: %v", messenger, err)
 		}
 	}
+}
+
+func (w *WatchCommand) isExistRunningOrDuplicateLane(failedFlagPath string) bool {
+	_, err := os.Stat(filepath.Join(
+		w.options.WfqLogPath,
+		DIR_RUNNING,
+		filepath.Base(failedFlagPath)))
+	return !os.IsNotExist(err)
 }
 
 func getChipId(filename string) string {
