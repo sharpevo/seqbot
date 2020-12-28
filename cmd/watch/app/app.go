@@ -140,7 +140,7 @@ func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
 			return message, err
 		}
 		count, size, err := util.FastqCountAndSize(
-			util.ResultPathFromWFQLogPath(w.options.WfqLogPath, chipId))
+			util.FastqPathFromWFQLogPath(w.options.WfqLogPath, chipId))
 		if err != nil {
 			return message, err
 		}
