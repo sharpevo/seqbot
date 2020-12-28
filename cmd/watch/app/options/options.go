@@ -22,6 +22,7 @@ type Options struct {
 	WfqLogPath string
 	DingTokens arrayFlag
 	Debug      bool
+	Archive    bool
 }
 
 func AttachOptions(cmd *flag.FlagSet) *Options {
@@ -37,6 +38,12 @@ func AttachOptions(cmd *flag.FlagSet) *Options {
 		"debug",
 		false,
 		"show debug message",
+	)
+	cmd.BoolVar(
+		&options.Archive,
+		"archive",
+		true,
+		"archive result in YYYYMM directory",
 	)
 	cmd.Var(
 		&options.DingTokens,
