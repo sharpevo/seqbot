@@ -159,6 +159,7 @@ func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
 		archivedPath, err := w.archive(chipId)
 		if err != nil {
 			logrus.Errorf("failed to archive %s: %v", chipId, err)
+			return message, nil
 		}
 		logrus.Infof("archived %s: %s", chipId, archivedPath)
 		message = fmt.Sprintf("%s\n- Archive: %s",
