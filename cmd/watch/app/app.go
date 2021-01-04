@@ -140,8 +140,7 @@ func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
 		if err := l.Finish(); err != nil {
 			return message, err
 		}
-		count, size, err := util.FastqCountAndSize(
-			util.FastqPathFromWFQLogPath(w.options.WfqLogPath, chipId))
+		count, size, err := util.FastqCountAndSize(w.options.WfqLogPath, chipId)
 		if err != nil {
 			return message, err
 		}
@@ -190,7 +189,7 @@ func (w *WatchCommand) send(message string) {
 }
 
 func (w *WatchCommand) archive(chipId string) (string, error) {
-	resultPath := util.ResultPathFromWFQLogPath(w.options.WfqLogPath)
+	resultPath := util.ResultRootPathFromWFQLogPath(w.options.WfqLogPath)
 	archivedPath, err := util.CreateArchivedDir(resultPath, time.Now())
 	if err != nil {
 		return archivedPath, err
