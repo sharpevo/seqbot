@@ -98,9 +98,15 @@ func (w *WatchCommand) watch() error {
 						logrus.Debugf("ignore creation: %s", event.Name)
 						continue
 					}
-					message, err := w.update(event.Name, getChipId(event.Name))
+					chipId := getChipId(event.Name)
+					message, err := w.update(event.Name, chipId)
 					if err != nil {
-						logrus.Errorf("failed to update: %s", err)
+						logrus.Errorf("failed to update %s: %v", chipId, err)
+						message = fmt.Sprintf(
+							"**%s**: WFQ completed, but failed to update database.",
+							chipId)
+						w.send(message)
+						continue
 					}
 					w.send(message)
 					logrus.Infof("message sent: %s", message)
