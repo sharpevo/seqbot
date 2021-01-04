@@ -27,10 +27,11 @@ func FlagPathFromWFQLogPath(wfqlogPath string) string {
 	return filepath.Join(filepath.Dir(wfqlogPath), PATH_FLAG)
 }
 
-func FastqCountAndSize(fastqPath string) (int, string, error) {
+func FastqCountAndSize(wfqlogPath string, chipId string) (int, string, error) {
+	resultChipPath := ResultChipPathFromWFQLogPath(wfqlogPath, chipId)
 	var size int64
 	count := 0
-	err := filepath.Walk(fastqPath, func(_ string, info os.FileInfo, err error) error {
+	err := filepath.Walk(resultChipPath, func(p string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
