@@ -15,12 +15,12 @@ const (
 	LAYOUT_ARCHIVE = "200601"
 )
 
-func ResultPathFromWFQLogPath(wfqlogPath string) string {
+func ResultRootPathFromWFQLogPath(wfqlogPath string) string {
 	return filepath.Join(filepath.Dir(wfqlogPath), PATH_RESULT)
 }
 
-func FastqPathFromWFQLogPath(wfqlogPath string, chipId string) string {
-	return filepath.Join(ResultPathFromWFQLogPath(wfqlogPath), chipId, "L01")
+func ResultChipPathFromWFQLogPath(wfqlogPath string, chipId string) string {
+	return filepath.Join(ResultRootPathFromWFQLogPath(wfqlogPath), chipId)
 }
 
 func FlagPathFromWFQLogPath(wfqlogPath string) string {
