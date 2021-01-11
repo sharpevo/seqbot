@@ -33,7 +33,7 @@ func (d *DingBot) Send(message string) error {
 	data := map[string]interface{}{
 		"msgtype": "markdown",
 		"markdown": map[string]interface{}{
-			"title": "T7",
+			"title": "seqbot",
 			"text":  message,
 		},
 	}
