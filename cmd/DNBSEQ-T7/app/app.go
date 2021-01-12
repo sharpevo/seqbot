@@ -155,8 +155,8 @@ func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
 			return message, err
 		}
 		message = fmt.Sprintf(
-			"**%s**: WFQ completed.\n- Barcode: %s\n- Time: %s\n- Count: %d\n- Size: %s",
-			l.ChipId, f.BarcodeType(), l.Duration(), count, size)
+			"**%s** sequencing completed, with %d fq.gz in %s.\n- Slide: %s\n- WFQ Time: %s",
+			f.BarcodeType(), count, size, l.ChipId, l.Duration())
 		if !w.options.Archive {
 			logrus.Infof("ignore archiving %s", chipId)
 			return message, nil
