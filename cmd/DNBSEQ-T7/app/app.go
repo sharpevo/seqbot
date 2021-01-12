@@ -109,7 +109,6 @@ func (w *WatchCommand) watch() error {
 						continue
 					}
 					w.send(message)
-					logrus.Infof("message sent: %s", message)
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
@@ -140,7 +139,8 @@ func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
 		if err := l.Start(); err != nil {
 			return message, err
 		}
-		return fmt.Sprintf("**%s**: WFQ has been started.", l.ChipId), nil
+		logrus.Infof("%s: WFQ has been started.", l.ChipId)
+		return "", nil
 	case DIR_FINISH:
 		l := lane.NewLane(chipId)
 		if err := l.Finish(); err != nil {
@@ -187,11 +187,16 @@ func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
 }
 
 func (w *WatchCommand) send(message string) {
+	if message == "" {
+		logrus.Warn("empty message is ignored")
+		return
+	}
 	for _, messenger := range w.messengers {
 		err := messenger.Send(message)
 		if err != nil {
 			logrus.Errorf("failed to send message by %s: %v", messenger, err)
 		}
+		logrus.Infof("message sent: %s", message)
 	}
 }
 
