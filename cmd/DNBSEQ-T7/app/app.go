@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sharpevo/seqbot/cmd/watch/app/options"
+	"github.com/sharpevo/seqbot/cmd/DNBSEQ-T7/app/options"
 	"github.com/sharpevo/seqbot/internal/pkg/flagjson"
 	"github.com/sharpevo/seqbot/internal/pkg/lane"
 	"github.com/sharpevo/seqbot/pkg/messenger"

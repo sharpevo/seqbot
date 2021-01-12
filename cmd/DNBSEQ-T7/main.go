@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sharpevo/seqbot/cmd/watch/app"
+	"github.com/sharpevo/seqbot/cmd/DNBSEQ-T7/app"
 )
 
 func main() {
