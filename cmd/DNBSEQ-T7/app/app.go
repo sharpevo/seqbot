@@ -25,6 +25,8 @@ const (
 	DIR_RUNNING = "running"
 	DIR_FINISH  = "finish"
 	DIR_FAIL    = "fail"
+
+	MSG_PLATFORM = "###### DNBSEQ-T7"
 )
 
 func init() {
@@ -191,6 +193,7 @@ func (w *WatchCommand) send(message string) {
 		logrus.Warn("empty message is ignored")
 		return
 	}
+	message = fmt.Sprintf("%s\n%s", message, MSG_PLATFORM)
 	for _, messenger := range w.messengers {
 		err := messenger.Send(message)
 		if err != nil {
