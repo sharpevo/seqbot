@@ -97,7 +97,7 @@ func (m *Mgi2000Command) watch() error {
 					if util.IsSuccess(event.Name) {
 						slideId, dnbId := util.ParseMgiInfo(event.Name)
 						message := fmt.Sprintf(
-							"**%s** sequencing completed.\n- Slide: %s\n",
+							"**%s**: sequencing completed.\n- Slide: %s\n",
 							dnbId,
 							slideId)
 						m.send(message)
