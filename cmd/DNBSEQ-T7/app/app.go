@@ -105,7 +105,7 @@ func (w *WatchCommand) watch() error {
 					if err != nil {
 						logrus.Errorf("failed to update %s: %v", chipId, err)
 						message = fmt.Sprintf(
-							"**%s**: WFQ completed, but failed to update database.",
+							"**%s**: sequencing completed, but failed to update database.",
 							chipId)
 						w.send(message)
 						continue
@@ -157,7 +157,7 @@ func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
 			return message, err
 		}
 		message = fmt.Sprintf(
-			"**%s** sequencing completed, with %d fq.gz in %s.\n- Slide: %s\n- WFQ Time: %s",
+			"**%s**: sequencing completed, with %d fq.gz in %s.\n- Slide: %s\n- WFQ Time: %s",
 			f.BarcodeType(), count, size, l.ChipId, l.Duration())
 		if !w.options.Archive {
 			logrus.Infof("ignore archiving %s", chipId)
