@@ -18,6 +18,8 @@ import (
 
 const (
 	FILE_LOG = "seqbot.log"
+
+	MSG_PLATFORM = "###### MGISEQ-2000"
 )
 
 func init() {
@@ -130,6 +132,7 @@ func (m *Mgi2000Command) watch() error {
 }
 
 func (m *Mgi2000Command) send(message string) {
+	message = fmt.Sprintf("%s\n%s", message, MSG_PLATFORM)
 	for _, messenger := range m.messengers {
 		err := messenger.Send(message)
 		if err != nil {
