@@ -5,14 +5,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 const (
 	PATH_RESULT = "result/OutputFq/upload"
 	PATH_FLAG   = "flag"
-
-	LAYOUT_ARCHIVE = "200601"
 )
 
 func ResultRootPathFromWFQLogPath(wfqlogPath string) string {
@@ -51,16 +48,4 @@ func humanReadable(size int64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %cB", float64(size)/float64(div), "KMGTPE"[exp])
-}
-
-func archivedDir(timestamp time.Time) string {
-	return timestamp.Format(LAYOUT_ARCHIVE)
-}
-
-func CreateArchivedDir(rootDir string, timestamp time.Time) (string, error) {
-	archivedPath := filepath.Join(rootDir, archivedDir(timestamp))
-	if err := os.MkdirAll(archivedPath, 0755); err != nil {
-		return archivedPath, err
-	}
-	return archivedPath, nil
 }
