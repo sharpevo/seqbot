@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/sharpevo/seqbot/cmd/DNBSEQ-T7/app/options"
+	"github.com/sharpevo/seqbot/internal/pkg/action"
 	"github.com/sharpevo/seqbot/internal/pkg/flagjson"
 	"github.com/sharpevo/seqbot/internal/pkg/lane"
 	"github.com/sharpevo/seqbot/pkg/messenger"
@@ -48,6 +48,7 @@ type WatchCommand struct {
 	watchDir   string
 	options    *options.Options
 	messengers []messenger.Messenger
+	actions    []action.ActionInterface
 }
 
 func NewWatchCommand() *WatchCommand {
@@ -67,6 +68,12 @@ func (w *WatchCommand) validate() error {
 		logrus.Infof("add messenger: %s", dingbot)
 	}
 	w.watchDir = w.options.WfqLogPath
+	w.actions = []action.ActionInterface{}
+	if w.options.Archive {
+		archiveAction := &action.ArchiveAction{}
+		w.actions = append(w.actions, archiveAction)
+		logrus.Infof("add action '%s'", archiveAction.Name())
+	}
 	if w.options.Debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
@@ -159,20 +166,16 @@ func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
 		message = fmt.Sprintf(
 			"**%s**: sequencing completed, with %d fq.gz in %s.\n- Slide: %s\n- WFQ Time: %s",
 			f.BarcodeType(), count, size, l.ChipId, l.Duration())
-		if !w.options.Archive {
-			logrus.Infof("ignore archiving %s", chipId)
-			return message, nil
+		for _, a := range w.actions {
+			output, err := a.Run(w.options.WfqLogPath, l.ChipId)
+			if err != nil {
+				logrus.Errorf("failed to run '%s' on '%s': %v", a.Name(), chipId, err)
+				message = fmt.Sprintf("%s\n- %s: failed", message, a.Name())
+				continue
+			}
+			logrus.Infof("action '%s' on '%s' success: %s", a.Name(), chipId, output)
+			message = fmt.Sprintf("%s\n- %s: %s", message, a.Name(), output)
 		}
-		archivedPath, err := w.archive(chipId)
-		if err != nil {
-			logrus.Errorf("failed to archive %s: %v", chipId, err)
-			message = fmt.Sprintf("%s\n- Archive: failed", message)
-			return message, nil
-		}
-		logrus.Infof("archived %s: %s", chipId, archivedPath)
-		message = fmt.Sprintf("%s\n- Archive: %s",
-			message, filepath.Base(archivedPath))
-		return message, nil
 	case DIR_FAIL:
 		if w.isExistRunningOrDuplicateLane(eventName) {
 			logrus.Warnf("Not mark as fail for exist running or duplicate lane")
@@ -186,6 +189,7 @@ func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
 	default:
 		return message, fmt.Errorf("invalide dir: %s", dir)
 	}
+	return message, nil
 }
 
 func (w *WatchCommand) send(message string) {
@@ -201,19 +205,6 @@ func (w *WatchCommand) send(message string) {
 		}
 		logrus.Infof("message sent: %s", message)
 	}
-}
-
-func (w *WatchCommand) archive(chipId string) (string, error) {
-	resultPath := util.ResultRootPathFromWFQLogPath(w.options.WfqLogPath)
-	archivedPath, err := util.CreateArchivedDir(resultPath, time.Now())
-	if err != nil {
-		return archivedPath, err
-	}
-	oldPath := filepath.Join(resultPath, chipId)
-	if err := os.Rename(oldPath, filepath.Join(archivedPath, chipId)); err != nil {
-		return archivedPath, err
-	}
-	return archivedPath, nil
 }
 
 func (w *WatchCommand) isExistRunningOrDuplicateLane(failedFlagPath string) bool {
