@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -102,6 +101,8 @@ func (m *Mgi2000Command) watch() error {
 							slideId)
 						m.send(message)
 						logrus.Infof("message sent: %s", message)
+					} else {
+						logrus.Infof("ignore event: %s", event.Name)
 					}
 				}
 			case err, ok := <-watcher.Errors:
@@ -113,20 +114,18 @@ func (m *Mgi2000Command) watch() error {
 		}
 	}()
 
-	watcher.Add(m.dataPath)
-	logrus.Infof("watching directory: %s", m.dataPath)
-	files, err := ioutil.ReadDir(m.dataPath)
-	if err != nil {
-		return err
-	}
-	for _, f := range files {
-		filePath := filepath.Join(m.dataPath, f.Name())
-		if f.Mode().IsDir() {
-			watcher.Add(filePath)
-			logrus.Infof("watching directory: %s", filePath)
-			continue
-		}
-	}
+	err = filepath.Walk(
+		m.dataPath,
+		func(p string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.Mode().IsDir() {
+				watcher.Add(p)
+				logrus.Infof("watching directory: %s", p)
+			}
+			return nil
+		})
 	<-done
 	return nil
 }
