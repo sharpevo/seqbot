@@ -102,6 +102,8 @@ func (m *Mgi2000Command) watch() error {
 							slideId)
 						m.send(message)
 						logrus.Infof("message sent: %s", message)
+					} else {
+						logrus.Infof("ignore event: %s", event.Name)
 					}
 				}
 			case err, ok := <-watcher.Errors:
