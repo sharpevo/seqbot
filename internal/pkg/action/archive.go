@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -9,30 +10,35 @@ import (
 )
 
 const (
-	LAYOUT_ARCHIVE      = "200601"
-	NAME_ARCHIVE_ACTION = "Archive"
+	NAME_ARCHIVE   = "Archive"
+	LAYOUT_ARCHIVE = "200601"
 
-	MSG_TPL_ARCHIVE_SUCC = "- %s: %s\n"
-	MSG_TPL_ARCHIVE_FAIL = "- %s: failed\n"
+	MSG_TPL_ARCHIVE_SUCC = "- Archive: %s"
+	MSG_ARCHIVE_FAIL     = "- Archive: failed"
 )
 
 type ArchiveAction struct{}
 
 func (a *ArchiveAction) Run(
+	eventName string,
 	wfqLogPath string,
 	chipId string,
 ) (string, error) {
 	rootPath := util.ResultRootPathFromWFQLogPath(wfqLogPath)
 	archivePath, err := getArchivePath(rootPath, time.Now())
 	if err != nil {
-		return fmt.Sprintf(MSG_TPL_ARCHIVE_FAIL, NAME_ARCHIVE_ACTION), err
+		return MSG_ARCHIVE_FAIL, err
 	}
 	return fmt.Sprintf(
-			MSG_TPL_ARCHIVE_SUCC, NAME_ARCHIVE_ACTION, getOutput(archivePath),
+			MSG_TPL_ARCHIVE_SUCC, getOutput(archivePath),
 		), os.Rename(
 			filepath.Join(rootPath, chipId),
 			filepath.Join(archivePath, chipId),
 		)
+}
+
+func (a *ArchiveAction) Name() string {
+	return NAME_ARCHIVE
 }
 
 func getArchivePath(rootPath string, timestamp time.Time) (string, error) {
@@ -46,8 +52,4 @@ func getArchiveName(timestamp time.Time) string {
 
 func getOutput(archivePath string) string {
 	return filepath.Base(archivePath)
-}
-
-func (a *ArchiveAction) Name() string {
-	return NAME_ARCHIVE_ACTION
 }
