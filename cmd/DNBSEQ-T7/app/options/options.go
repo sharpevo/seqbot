@@ -19,10 +19,12 @@ func (a *arrayFlag) Set(value string) error {
 }
 
 type Options struct {
-	WfqLogPath string
-	DingTokens arrayFlag
-	Debug      bool
-	Archive    bool
+	WfqLogPath    string
+	DingTokens    arrayFlag
+	Debug         bool
+	ActionArchive bool
+	ActionSummary bool
+	ActionWfqTime bool
 }
 
 func AttachOptions(cmd *flag.FlagSet) *Options {
@@ -40,10 +42,22 @@ func AttachOptions(cmd *flag.FlagSet) *Options {
 		"show debug message",
 	)
 	cmd.BoolVar(
-		&options.Archive,
-		"archive",
+		&options.ActionArchive,
+		"actionarchive",
 		true,
 		"archive result in YYYYMM directory",
+	)
+	cmd.BoolVar(
+		&options.ActionSummary,
+		"actionsummary",
+		true,
+		"summary the number and size of fq.gz",
+	)
+	cmd.BoolVar(
+		&options.ActionWfqTime,
+		"actionwfqtime",
+		true,
+		"calculate the time of writing fastq",
 	)
 	cmd.Var(
 		&options.DingTokens,
