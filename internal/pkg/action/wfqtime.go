@@ -10,7 +10,7 @@ const (
 	NAME_WFQTIME = "WfqTime"
 
 	MSG_TPL_WFQTIME_SUCC = "- WFQ Time: %s"
-	MSG_TPL_WFQTIME_FAIL = "- WFQ Time: ?"
+	MSG_TPL_WFQTIME_FAIL = "- WFQ Time: -"
 )
 
 type WfqTimeAction struct{}

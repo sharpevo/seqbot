@@ -13,7 +13,7 @@ const (
 	NAME_SUMMARY = "Summary"
 
 	MSG_TPL_SUMMARY_SUCC = "- Count: %d\n- Size: %s"
-	MSG_SUMMARY_FAIL     = "- Count: ?\n- Size: ?"
+	MSG_SUMMARY_FAIL     = "- Count: -\n- Size: -"
 )
 
 type SummaryAction struct{}

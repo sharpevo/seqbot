@@ -14,7 +14,7 @@ const (
 	LAYOUT_ARCHIVE = "200601"
 
 	MSG_TPL_ARCHIVE_SUCC = "- Archive: %s"
-	MSG_ARCHIVE_FAIL     = "- Archive: failed"
+	MSG_ARCHIVE_FAIL     = "- Archive: -"
 )
 
 type ArchiveAction struct{}
