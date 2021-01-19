@@ -1,6 +1,6 @@
 package action
 
 type ActionInterface interface {
-	Run(wfqLogPath string, chipId string) (string, error)
+	Run(eventname string, wfqLogPath string, chipId string) (string, error)
 	Name() string
 }
