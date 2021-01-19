@@ -29,12 +29,13 @@ func (a *ArchiveAction) Run(
 	if err != nil {
 		return MSG_ARCHIVE_FAIL, err
 	}
-	return fmt.Sprintf(
-			MSG_TPL_ARCHIVE_SUCC, getOutput(archivePath),
-		), os.Rename(
-			filepath.Join(rootPath, chipId),
-			filepath.Join(archivePath, chipId),
-		)
+	err = os.Rename(
+		filepath.Join(rootPath, chipId),
+		filepath.Join(archivePath, chipId))
+	if err != nil {
+		return MSG_ARCHIVE_FAIL, err
+	}
+	return fmt.Sprintf(MSG_TPL_ARCHIVE_SUCC, getOutput(archivePath)), nil
 }
 
 func (a *ArchiveAction) Name() string {
