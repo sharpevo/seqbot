@@ -10,10 +10,8 @@ import (
 
 	"github.com/sharpevo/seqbot/cmd/DNBSEQ-T7/app/options"
 	"github.com/sharpevo/seqbot/internal/pkg/action"
-	"github.com/sharpevo/seqbot/internal/pkg/flagjson"
 	"github.com/sharpevo/seqbot/internal/pkg/lane"
 	"github.com/sharpevo/seqbot/pkg/messenger"
-	"github.com/sharpevo/seqbot/pkg/util"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
@@ -68,11 +66,24 @@ func (w *WatchCommand) validate() error {
 		logrus.Infof("add messenger: %s", dingbot)
 	}
 	w.watchDir = w.options.WfqLogPath
-	w.actions = []action.ActionInterface{}
-	if w.options.Archive {
+	w.actions = []action.ActionInterface{
+		&action.BarcodeAction{},
+		&action.SlideAction{},
+	}
+	if w.options.ActionSummary {
+		summaryAction := &action.SummaryAction{}
+		w.actions = append(w.actions, summaryAction)
+		logrus.Infof("add action %s", summaryAction.Name())
+	}
+	if w.options.ActionWfqTime {
+		wfqTimeAction := &action.WfqTimeAction{}
+		w.actions = append(w.actions, wfqTimeAction)
+		logrus.Infof("add action %s", wfqTimeAction.Name())
+	}
+	if w.options.ActionArchive {
 		archiveAction := &action.ArchiveAction{}
 		w.actions = append(w.actions, archiveAction)
-		logrus.Infof("add action '%s'", archiveAction.Name())
+		logrus.Infof("add action %s", archiveAction.Name())
 	}
 	if w.options.Debug {
 		logrus.SetLevel(logrus.DebugLevel)
@@ -140,41 +151,25 @@ func (w *WatchCommand) watch() error {
 }
 
 func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
-	message := ""
+	msg := &Message{sep: "\n"}
 	dir := filepath.Base(filepath.Dir(eventName))
 	switch dir {
 	case DIR_RUNNING:
 		l := lane.NewLane(chipId)
 		if err := l.Start(); err != nil {
-			return message, err
+			return msg.String(), err
 		}
 		logrus.Infof("%s: WFQ has been started.", l.ChipId)
 		return "", nil
 	case DIR_FINISH:
-		l := lane.NewLane(chipId)
-		if err := l.Finish(); err != nil {
-			return message, err
-		}
-		count, size, err := util.FastqCountAndSize(w.options.WfqLogPath, chipId)
-		if err != nil {
-			return message, err
-		}
-		f, err := flagjson.ReadFlag(eventName)
-		if err != nil {
-			return message, err
-		}
-		message = fmt.Sprintf(
-			"**%s**: sequencing completed, with %d fq.gz in %s.\n- Slide: %s\n- WFQ Time: %s",
-			f.BarcodeType(), count, size, l.ChipId, l.Duration())
 		for _, a := range w.actions {
-			output, err := a.Run(w.options.WfqLogPath, l.ChipId)
+			output, err := a.Run(eventName, w.options.WfqLogPath, chipId)
 			if err != nil {
 				logrus.Errorf("failed to run '%s' on '%s': %v", a.Name(), chipId, err)
-				message = fmt.Sprintf("%s\n- %s: failed", message, a.Name())
-				continue
+			} else {
+				logrus.Infof("action '%s' on '%s' success: %s", a.Name(), chipId, output)
 			}
-			logrus.Infof("action '%s' on '%s' success: %s", a.Name(), chipId, output)
-			message = fmt.Sprintf("%s\n- %s: %s", message, a.Name(), output)
+			msg.Add(output)
 		}
 	case DIR_FAIL:
 		if w.isExistRunningOrDuplicateLane(eventName) {
@@ -183,13 +178,13 @@ func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
 		}
 		l := lane.NewLane(chipId)
 		if err := l.Finish(); err != nil {
-			return message, err
+			return msg.String(), err
 		}
 		return fmt.Sprintf("**%s**: WFQ failed, %s.", l.ChipId, l.Duration()), nil
 	default:
-		return message, fmt.Errorf("invalide dir: %s", dir)
+		return msg.String(), fmt.Errorf("invalide dir: %s", dir)
 	}
-	return message, nil
+	return msg.String(), nil
 }
 
 func (w *WatchCommand) send(message string) {

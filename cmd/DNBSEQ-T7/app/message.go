@@ -9,7 +9,6 @@ type Message struct {
 
 func (m *Message) Add(msg string) {
 	m.msg = fmt.Sprintf("%s%s%s", m.msg, m.sep, msg)
-	fmt.Println(">>", m.msg)
 }
 
 func (m *Message) String() string {
