@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	cmd := app.NewWatchCommand()
+	cmd := app.NewT7Command()
 	if err := cmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
