@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -20,6 +21,10 @@ func ResultChipPathFromWFQLogPath(wfqlogPath string, chipId string) string {
 
 func FlagPathFromWFQLogPath(wfqlogPath string) string {
 	return filepath.Join(filepath.Dir(wfqlogPath), PATH_FLAG)
+}
+
+func ChipIdFromFlagPath(filePath string) string {
+	return strings.Split(filepath.Base(filePath), "_")[0]
 }
 
 func HumanReadable(size int64) string {
