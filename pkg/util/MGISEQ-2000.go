@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -13,14 +14,16 @@ import (
 const (
 	BIOINFO_NAME = "BioInfo.csv"
 	PREFIX_DNBID = "DNB ID,"
+
+	TMPL_SUCCESS = "^%s.*_Success.txt$"
 )
 
 var lanes = []string{"L01", "L02", "L03", "L04"}
 
 func IsSuccess(filePath string) bool {
 	lastDir := filepath.Base(filepath.Dir(filePath))
-	expectedName := fmt.Sprintf("%s_Success.txt", lastDir)
-	return expectedName == filepath.Base(filePath)
+	r := regexp.MustCompile(fmt.Sprintf(TMPL_SUCCESS, lastDir))
+	return r.MatchString(filepath.Base(filePath))
 }
 
 func ParseMgiInfo(successPath string) (string, string) {
