@@ -12,8 +12,8 @@ const (
 
 	ATTR_BARCODE_TYPE = "Barcode Type"
 
-	MSG_TPL_BARCODE_SUCC = "**%s** sequencing completed"
-	MSG_BARCODE_FAIL     = "**-** sequencing completed"
+	MSG_TPL_BARCODE_SUCC = "**%s**: sequencing completed"
+	MSG_BARCODE_FAIL     = "**-**: sequencing completed"
 )
 
 type BarcodeAction struct{}
