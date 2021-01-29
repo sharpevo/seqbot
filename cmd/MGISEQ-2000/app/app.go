@@ -5,20 +5,18 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
-	"github.com/sharpevo/seqbot/cmd/MGISEQ-2000/app/options"
-	"github.com/sharpevo/seqbot/pkg/messenger"
 	"github.com/sharpevo/seqbot/pkg/util"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 )
 
 const (
 	FILE_LOG = "seqbot.log"
 
-	MSG_PLATFORM = "###### MGISEQ-2000"
+	CMD_WATCH = "watch"
+	CMD_RUN   = "run"
+	CMD_SEND  = "send"
 )
 
 func init() {
@@ -35,31 +33,16 @@ func init() {
 	})
 }
 
-type Mgi2000Command struct {
-	dataPath   string
-	options    *options.Options
-	messengers []messenger.Messenger
-}
+type Mgi2000Command struct{}
 
 func NewMgi2000Command() *Mgi2000Command {
-	return &Mgi2000Command{
-		options: options.AttachOptions(flag.CommandLine),
-	}
+	return &Mgi2000Command{}
 }
 
 func (m *Mgi2000Command) validate() error {
-	flag.Parse()
-	if m.options.DataPath == "" {
-		return fmt.Errorf("data path is required")
-	}
-	for _, token := range m.options.DingTokens {
-		dingbot := messenger.NewDingBot(token)
-		m.messengers = append(m.messengers, dingbot)
-		logrus.Infof("add messenger: %s", dingbot)
-	}
-	m.dataPath = m.options.DataPath
-	if m.options.Debug {
-		logrus.SetLevel(logrus.DebugLevel)
+	if len(os.Args) < 2 {
+		m.Usage()
+		return fmt.Errorf("Error: command is required")
 	}
 	return nil
 }
@@ -68,74 +51,50 @@ func (m *Mgi2000Command) Execute() error {
 	if err := m.validate(); err != nil {
 		return err
 	}
-	return m.watch()
-}
-
-func (m *Mgi2000Command) watch() error {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return fmt.Errorf("failed to add watcher '%s': %s", m.dataPath, err)
-	}
-	defer watcher.Close()
-	done := make(chan bool)
-	go func() {
-		for {
-			select {
-			case event, ok := <-watcher.Events:
-				if !ok {
-					return
-				}
-				if event.Op&fsnotify.Create == fsnotify.Create {
-					f, _ := os.Stat(event.Name)
-					if f.Mode().IsDir() {
-						watcher.Add(event.Name)
-						logrus.Infof("watching directory: %s", event.Name)
-						continue
-					}
-
-					if util.IsSuccess(event.Name) {
-						slideId, dnbId := util.ParseMgiInfo(event.Name)
-						message := fmt.Sprintf(
-							"**%s**: sequencing completed.\n- Slide: %s\n",
-							dnbId,
-							slideId)
-						m.send(message)
-						logrus.Infof("message sent: %s", message)
-					} else {
-						logrus.Infof("ignore event: %s", event.Name)
-					}
-				}
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
-				logrus.Errorf("watcher error: %s", err)
-			}
+	watchFlagSet := flag.NewFlagSet(CMD_WATCH, flag.ExitOnError)
+	runFlagSet := flag.NewFlagSet(CMD_RUN, flag.ExitOnError)
+	sendFlagSet := flag.NewFlagSet(CMD_SEND, flag.ExitOnError)
+	switch os.Args[1] {
+	case CMD_WATCH:
+		watchCommand := NewWatchCommand(watchFlagSet)
+		if err := watchFlagSet.Parse(os.Args[2:]); err != nil {
+			watchFlagSet.PrintDefaults()
+			return err
 		}
-	}()
-
-	err = filepath.Walk(
-		m.dataPath,
-		func(p string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if info.Mode().IsDir() {
-				watcher.Add(p)
-				logrus.Infof("watching directory: %s", p)
-			}
-			return nil
-		})
-	<-done
+		return watchCommand.Execute()
+	case CMD_RUN:
+		runCommand := NewRunCommand(runFlagSet)
+		if err := runFlagSet.Parse(os.Args[2:]); err != nil {
+			runFlagSet.PrintDefaults()
+			return err
+		}
+		return runCommand.Execute()
+	case CMD_SEND:
+		sendCommand := util.NewSendCommand(sendFlagSet)
+		if err := sendFlagSet.Parse(os.Args[2:]); err != nil {
+			sendFlagSet.PrintDefaults()
+			return err
+		}
+		return sendCommand.Execute()
+	default:
+		m.Usage()
+		return fmt.Errorf("Error: invalid command")
+	}
 	return nil
 }
 
-func (m *Mgi2000Command) send(message string) {
-	message = fmt.Sprintf("%s\n%s", message, MSG_PLATFORM)
-	for _, messenger := range m.messengers {
-		err := messenger.Send(message)
-		if err != nil {
-			logrus.Errorf("failed to send message by %s: %v", messenger, err)
-		}
-	}
+func (t *Mgi2000Command) Usage() {
+	fmt.Printf(`%s manages data generated from sequencer and sends notifications.
+
+Commands:
+  run: run actions.
+  send: send messages.
+  watch: watch WFQLog, take actions and send messages.
+
+Use "%s <command> -h" for more information about a given command.
+
+`,
+		os.Args[0],
+		os.Args[0],
+	)
 }
