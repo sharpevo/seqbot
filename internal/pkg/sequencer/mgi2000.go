@@ -67,6 +67,10 @@ func (m *Mgiseq2000) GetResultDir(successPath string) (string, error) {
 	return filepath.Dir(successPath), nil
 }
 
+func (m *Mgiseq2000) GetWfqTime(successPath string) (string, error) {
+	return "", nil
+}
+
 func (m *Mgiseq2000) IsSuccess(filePath string) (bool, error) {
 	lastDir := filepath.Base(filepath.Dir(filePath))
 	r := regexp.MustCompile(fmt.Sprintf(TMPL_SUCCESS, lastDir))
