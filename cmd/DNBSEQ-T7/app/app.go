@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/sharpevo/seqbot/pkg/util"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -84,7 +86,7 @@ func (t *T7Command) Execute() error {
 		}
 		return runCommand.Execute()
 	case CMD_SEND:
-		sendCommand := NewSendCommand(sendFlagSet)
+		sendCommand := util.NewSendCommand(sendFlagSet)
 		if err := sendFlagSet.Parse(os.Args[2:]); err != nil {
 			sendFlagSet.PrintDefaults()
 			return err
