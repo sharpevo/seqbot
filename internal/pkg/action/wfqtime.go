@@ -2,29 +2,26 @@ package action
 
 import (
 	"fmt"
-
-	"github.com/sharpevo/seqbot/internal/pkg/lane"
 )
 
 const (
 	NAME_WFQTIME = "WfqTime"
 
 	MSG_TPL_WFQTIME_SUCC = "- WFQ Time: %s"
-	MSG_TPL_WFQTIME_FAIL = "- WFQ Time: -"
+	MSG_WFQTIME_FAIL     = "- WFQ Time: -"
 )
 
 type WfqTimeAction struct{}
 
 func (w *WfqTimeAction) Run(
 	eventName string,
-	wfqLogPath string,
-	chipId string,
+	command CommandInterface,
 ) (string, error) {
-	l := lane.NewLane(chipId)
-	if err := l.Finish(); err != nil {
-		return MSG_TPL_WFQTIME_FAIL, err
+	wfqtime, err := command.Sequencer().GetWfqTime(eventName)
+	if err != nil {
+		return MSG_WFQTIME_FAIL, err
 	}
-	return fmt.Sprintf(MSG_TPL_WFQTIME_SUCC, l.Duration()), nil
+	return fmt.Sprintf(MSG_TPL_WFQTIME_SUCC, wfqtime), nil
 }
 
 func (w *WfqTimeAction) Name() string {

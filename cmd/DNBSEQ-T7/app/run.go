@@ -4,26 +4,30 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/sharpevo/seqbot/cmd/DNBSEQ-T7/app/options"
+	dnbseqt7Options "github.com/sharpevo/seqbot/cmd/DNBSEQ-T7/app/options"
+	"github.com/sharpevo/seqbot/cmd/options"
 	"github.com/sharpevo/seqbot/internal/pkg/action"
-	"github.com/sharpevo/seqbot/pkg/util"
+	"github.com/sharpevo/seqbot/internal/pkg/sequencer"
 
 	"github.com/sirupsen/logrus"
 )
 
 type RunCommand struct {
-	option       *options.Options
-	wfqOption    *options.WfqOptions
-	actionOption *options.ActionOptions
+	flagPath  string
+	actions   []action.ActionInterface
+	sequencer sequencer.SequencerInterface
 
-	flagPath string
-	actions  []action.ActionInterface
+	option       *dnbseqt7Options.Dnbseqt7Options
+	debugOption  *options.DebugOptions
+	actionOption *options.ActionOptions
 }
 
 func NewRunCommand(flagSet *flag.FlagSet) *RunCommand {
 	cmd := &RunCommand{
-		option:       options.AttachOptions(flagSet),
-		wfqOption:    options.AttachWfqOptions(flagSet),
+		sequencer: &sequencer.Dnbseqt7{},
+
+		option:       dnbseqt7Options.AttachDnbseqt7Options(flagSet),
+		debugOption:  options.AttachDebugOptions(flagSet),
 		actionOption: options.AttachActionOptions(flagSet),
 	}
 	flagSet.StringVar(
@@ -42,11 +46,6 @@ func (r *RunCommand) validate() error {
 	r.actions = []action.ActionInterface{
 		&action.BarcodeAction{},
 		&action.SlideAction{},
-	}
-	if r.actionOption.ActionSummary {
-		summaryAction := &action.SummaryAction{}
-		r.actions = append(r.actions, summaryAction)
-		logrus.Infof("add action %s", summaryAction.Name())
 	}
 	if r.actionOption.ActionWfqTime {
 		wfqTimeAction := &action.WfqTimeAction{}
@@ -67,14 +66,22 @@ func (r *RunCommand) Execute() error {
 	if err := r.validate(); err != nil {
 		return err
 	}
-	chipId := util.ChipIdFromFlagPath(r.flagPath)
+	slide, err := r.Sequencer().GetSlide(r.flagPath)
+	if err != nil {
+		logrus.Errorf("failed to parse slide: %s", r.flagPath)
+		return err
+	}
 	for _, a := range r.actions {
-		output, err := a.Run(r.flagPath, r.wfqOption.WfqLogPath, chipId)
+		output, err := a.Run(r.flagPath, r)
 		if err != nil {
-			logrus.Errorf("failed to run '%s' on '%s': %v", a.Name(), chipId, err)
+			logrus.Errorf("failed to run '%s' on '%s': %v", a.Name(), slide, err)
 		} else {
-			logrus.Infof("action '%s' on '%s' success: %s", a.Name(), chipId, output)
+			logrus.Infof("action '%s' on '%s' success: %s", a.Name(), slide, output)
 		}
 	}
 	return nil
+}
+
+func (r *RunCommand) Sequencer() sequencer.SequencerInterface {
+	return r.sequencer
 }

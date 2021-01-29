@@ -44,7 +44,6 @@ func NewWatchCommand(flagSet *flag.FlagSet) *WatchCommand {
 }
 
 func (w *WatchCommand) validate() error {
-	flag.Parse()
 	if w.option.DataPath == "" {
 		return fmt.Errorf("data path is required")
 	}

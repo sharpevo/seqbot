@@ -7,9 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sharpevo/seqbot/cmd/DNBSEQ-T7/app/options"
+	dnbseqt7Options "github.com/sharpevo/seqbot/cmd/DNBSEQ-T7/app/options"
+	"github.com/sharpevo/seqbot/cmd/options"
 	"github.com/sharpevo/seqbot/internal/pkg/action"
 	"github.com/sharpevo/seqbot/internal/pkg/lane"
+	"github.com/sharpevo/seqbot/internal/pkg/sequencer"
 	"github.com/sharpevo/seqbot/pkg/messenger"
 	"github.com/sharpevo/seqbot/pkg/util"
 
@@ -26,27 +28,28 @@ const (
 )
 
 type WatchCommand struct {
+	sequencer  sequencer.SequencerInterface
 	messengers []messenger.Messenger
 	actions    []action.ActionInterface
 
-	option         *options.Options
-	wfqOption      *options.WfqOptions
+	option         *dnbseqt7Options.Dnbseqt7Options
+	debugOption    *options.DebugOptions
 	dingtalkOption *options.DingtalkOptions
 	actionOption   *options.ActionOptions
 }
 
 func NewWatchCommand(flagSet *flag.FlagSet) *WatchCommand {
 	return &WatchCommand{
-		option:         options.AttachOptions(flagSet),
-		wfqOption:      options.AttachWfqOptions(flagSet),
+		sequencer:      &sequencer.Dnbseqt7{},
+		option:         dnbseqt7Options.AttachDnbseqt7Options(flagSet),
+		debugOption:    options.AttachDebugOptions(flagSet),
 		dingtalkOption: options.AttachDingtalkOptions(flagSet),
 		actionOption:   options.AttachActionOptions(flagSet),
 	}
 }
 
 func (w *WatchCommand) validate() error {
-	flag.Parse()
-	if w.wfqOption.WfqLogPath == "" {
+	if w.option.WfqLogPath == "" {
 		return fmt.Errorf("wfqlog is required")
 	}
 	for _, token := range w.dingtalkOption.DingTokens {
@@ -58,11 +61,6 @@ func (w *WatchCommand) validate() error {
 		&action.BarcodeAction{},
 		&action.SlideAction{},
 	}
-	if w.actionOption.ActionSummary {
-		summaryAction := &action.SummaryAction{}
-		w.actions = append(w.actions, summaryAction)
-		logrus.Infof("add action %s", summaryAction.Name())
-	}
 	if w.actionOption.ActionWfqTime {
 		wfqTimeAction := &action.WfqTimeAction{}
 		w.actions = append(w.actions, wfqTimeAction)
@@ -73,7 +71,7 @@ func (w *WatchCommand) validate() error {
 		w.actions = append(w.actions, archiveAction)
 		logrus.Infof("add action %s", archiveAction.Name())
 	}
-	if w.option.Debug {
+	if w.debugOption.Debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 	return nil
@@ -91,7 +89,7 @@ func (w *WatchCommand) Execute() error {
 func (w *WatchCommand) watch() error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return fmt.Errorf("failed to add watcher '%s': %s", w.wfqOption.WfqLogPath, err)
+		return fmt.Errorf("failed to add watcher '%s': %s", w.option.WfqLogPath, err)
 	}
 	defer watcher.Close()
 	done := make(chan bool)
@@ -108,13 +106,17 @@ func (w *WatchCommand) watch() error {
 						logrus.Debugf("ignore creation: %s", event.Name)
 						continue
 					}
-					chipId := util.ChipIdFromFlagPath(event.Name)
-					message, err := w.update(event.Name, chipId)
+					slide, err := w.Sequencer().GetSlide(event.Name)
 					if err != nil {
-						logrus.Errorf("failed to update %s: %v", chipId, err)
+						logrus.Errorf("failed to parse slide: %s", event.Name)
+						continue
+					}
+					message, err := w.update(event.Name, slide)
+					if err != nil {
+						logrus.Errorf("failed to update %s: %v", slide, err)
 						message = fmt.Sprintf(
 							"**%s**: sequencing completed, but failed to update database.",
-							chipId)
+							slide)
 						w.send(message)
 						continue
 					}
@@ -129,9 +131,9 @@ func (w *WatchCommand) watch() error {
 		}
 	}()
 
-	dirFinish := filepath.Join(w.wfqOption.WfqLogPath, DIR_FINISH)
-	dirRunning := filepath.Join(w.wfqOption.WfqLogPath, DIR_RUNNING)
-	dirFail := filepath.Join(w.wfqOption.WfqLogPath, DIR_FAIL)
+	dirFinish := filepath.Join(w.option.WfqLogPath, DIR_FINISH)
+	dirRunning := filepath.Join(w.option.WfqLogPath, DIR_RUNNING)
+	dirFail := filepath.Join(w.option.WfqLogPath, DIR_FAIL)
 	watcher.Add(dirFinish)
 	watcher.Add(dirRunning)
 	watcher.Add(dirFail)
@@ -141,7 +143,7 @@ func (w *WatchCommand) watch() error {
 }
 
 func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
-	msg := &Message{sep: "\n"}
+	msg := util.NewMessage("\n")
 	dir := filepath.Base(filepath.Dir(eventName))
 	switch dir {
 	case DIR_RUNNING:
@@ -153,7 +155,7 @@ func (w *WatchCommand) update(eventName string, chipId string) (string, error) {
 		return "", nil
 	case DIR_FINISH:
 		for _, a := range w.actions {
-			output, err := a.Run(eventName, w.wfqOption.WfqLogPath, chipId)
+			output, err := a.Run(eventName, w)
 			if err != nil {
 				logrus.Errorf("failed to run '%s' on '%s': %v", a.Name(), chipId, err)
 			} else {
@@ -194,8 +196,12 @@ func (w *WatchCommand) send(message string) {
 
 func (w *WatchCommand) isExistRunningOrDuplicateLane(failedFlagPath string) bool {
 	_, err := os.Stat(filepath.Join(
-		w.wfqOption.WfqLogPath,
+		w.option.WfqLogPath,
 		DIR_RUNNING,
 		filepath.Base(failedFlagPath)))
 	return !os.IsNotExist(err)
+}
+
+func (w *WatchCommand) Sequencer() sequencer.SequencerInterface {
+	return w.sequencer
 }
