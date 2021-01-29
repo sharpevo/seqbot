@@ -7,16 +7,20 @@ import (
 const (
 	NAME_SLIDE         = "Slide"
 	MSG_TPL_SLIDE_SUCC = "- Slide: %s"
+	MSG_SLIDE_FAIL     = "- Slide: -"
 )
 
 type SlideAction struct{}
 
 func (s *SlideAction) Run(
 	eventName string,
-	wfqLogPath string,
-	chipId string,
+	command CommandInterface,
 ) (string, error) {
-	return fmt.Sprintf(MSG_TPL_SLIDE_SUCC, chipId), nil
+	slide, err := command.Sequencer().GetSlide(eventName)
+	if err != nil {
+		return MSG_SLIDE_FAIL, err
+	}
+	return fmt.Sprintf(MSG_TPL_SLIDE_SUCC, slide), nil
 }
 
 func (s *SlideAction) Name() string {

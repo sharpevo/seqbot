@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 const (
 	PATH_RESULT = "result/OutputFq/upload"
 	PATH_FLAG   = "flag"
+
+	LAYOUT_ARCHIVE = "200601"
 )
 
 func ResultRootPathFromWFQLogPath(wfqlogPath string) string {
@@ -34,4 +37,8 @@ func HumanReadable(size int64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %cB", float64(size)/float64(div), "KMGTPE"[exp])
+}
+
+func GetArchiveName(timestamp time.Time) string {
+	return timestamp.Format(LAYOUT_ARCHIVE)
 }
