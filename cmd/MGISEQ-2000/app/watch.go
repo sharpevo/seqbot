@@ -28,6 +28,7 @@ type WatchCommand struct {
 
 	option         *mgiOptions.Mgiseq2000Options
 	debugOption    *options.DebugOptions
+	logOption      *options.LogOptions
 	dingtalkOption *options.DingtalkOptions
 	actionOption   *options.ActionOptions
 }
@@ -38,12 +39,16 @@ func NewWatchCommand(flagSet *flag.FlagSet) *WatchCommand {
 
 		option:         mgiOptions.AttachMgiseq2000Options(flagSet),
 		debugOption:    options.AttachDebugOptions(flagSet),
+		logOption:      options.AttachLogOptions(flagSet),
 		dingtalkOption: options.AttachDingtalkOptions(flagSet),
 		actionOption:   options.AttachActionOptions(flagSet),
 	}
 }
 
 func (w *WatchCommand) validate() error {
+	if err := w.logOption.Init(); err != nil {
+		return err
+	}
 	if w.option.DataPath == "" {
 		return fmt.Errorf("data path is required")
 	}
@@ -65,15 +70,14 @@ func (w *WatchCommand) validate() error {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 	return nil
-
 }
 
 func (w *WatchCommand) Execute() error {
-	logrus.Info("watching started")
-	defer logrus.Info("watching done")
 	if err := w.validate(); err != nil {
 		return err
 	}
+	logrus.Info("watching started")
+	defer logrus.Info("watching done")
 	return w.watch()
 }
 
