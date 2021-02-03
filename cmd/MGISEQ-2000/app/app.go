@@ -3,35 +3,16 @@ package app
 import (
 	"flag"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/sharpevo/seqbot/pkg/util"
-
-	"github.com/sirupsen/logrus"
 )
 
 const (
-	FILE_LOG = "seqbot.log"
-
 	CMD_WATCH = "watch"
 	CMD_RUN   = "run"
 	CMD_SEND  = "send"
 )
-
-func init() {
-	logFile, err := os.OpenFile(FILE_LOG, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		fmt.Println("failed to open log file", FILE_LOG)
-		return
-	}
-	mw := io.MultiWriter(os.Stdout, logFile)
-	logrus.SetOutput(mw)
-	logrus.SetFormatter(&logrus.TextFormatter{
-		DisableColors:          true,
-		DisableLevelTruncation: false,
-	})
-}
 
 type Mgi2000Command struct{}
 
