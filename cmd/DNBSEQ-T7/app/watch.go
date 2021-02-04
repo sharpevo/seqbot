@@ -34,6 +34,7 @@ type WatchCommand struct {
 
 	option         *dnbseqt7Options.Dnbseqt7Options
 	debugOption    *options.DebugOptions
+	logOption      *options.LogOptions
 	dingtalkOption *options.DingtalkOptions
 	actionOption   *options.ActionOptions
 }
@@ -43,12 +44,16 @@ func NewWatchCommand(flagSet *flag.FlagSet) *WatchCommand {
 		sequencer:      &sequencer.Dnbseqt7{},
 		option:         dnbseqt7Options.AttachDnbseqt7Options(flagSet),
 		debugOption:    options.AttachDebugOptions(flagSet),
+		logOption:      options.AttachLogOptions(flagSet),
 		dingtalkOption: options.AttachDingtalkOptions(flagSet),
 		actionOption:   options.AttachActionOptions(flagSet),
 	}
 }
 
 func (w *WatchCommand) validate() error {
+	if err := w.logOption.Init(); err != nil {
+		return err
+	}
 	if w.option.WfqLogPath == "" {
 		return fmt.Errorf("wfqlog is required")
 	}
@@ -78,11 +83,11 @@ func (w *WatchCommand) validate() error {
 }
 
 func (w *WatchCommand) Execute() error {
-	logrus.Info("watching started")
-	defer logrus.Info("watching done")
 	if err := w.validate(); err != nil {
 		return err
 	}
+	logrus.Info("watching started")
+	defer logrus.Info("watching done")
 	return w.watch()
 }
 
