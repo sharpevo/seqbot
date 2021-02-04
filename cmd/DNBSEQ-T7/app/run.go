@@ -19,6 +19,7 @@ type RunCommand struct {
 
 	option       *dnbseqt7Options.Dnbseqt7Options
 	debugOption  *options.DebugOptions
+	logOption    *options.LogOptions
 	actionOption *options.ActionOptions
 }
 
@@ -28,6 +29,7 @@ func NewRunCommand(flagSet *flag.FlagSet) *RunCommand {
 
 		option:       dnbseqt7Options.AttachDnbseqt7Options(flagSet),
 		debugOption:  options.AttachDebugOptions(flagSet),
+		logOption:    options.AttachLogOptions(flagSet),
 		actionOption: options.AttachActionOptions(flagSet),
 	}
 	flagSet.StringVar(
@@ -40,6 +42,9 @@ func NewRunCommand(flagSet *flag.FlagSet) *RunCommand {
 }
 
 func (r *RunCommand) validate() error {
+	if err := r.logOption.Init(); err != nil {
+		return err
+	}
 	if r.flagPath == "" {
 		return fmt.Errorf("flagpath is required")
 	}
@@ -61,11 +66,11 @@ func (r *RunCommand) validate() error {
 }
 
 func (r *RunCommand) Execute() error {
-	logrus.Info("manually running actions started")
-	defer logrus.Info("manually running actions done")
 	if err := r.validate(); err != nil {
 		return err
 	}
+	logrus.Info("manually running actions started")
+	defer logrus.Info("manually running actions done")
 	slide, err := r.Sequencer().GetSlide(r.flagPath)
 	if err != nil {
 		logrus.Errorf("failed to parse slide: %s", r.flagPath)
