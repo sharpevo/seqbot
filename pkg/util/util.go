@@ -2,6 +2,8 @@ package util
 
 import (
 	"fmt"
+	"path/filepath"
+	"regexp"
 	"time"
 )
 
@@ -20,4 +22,9 @@ func HumanReadable(size int64) string {
 
 func GetArchiveName(timestamp time.Time) string {
 	return timestamp.Format(LAYOUT_ARCHIVE)
+}
+
+func IsArchiveDir(filePath string) bool {
+	r := regexp.MustCompile("^202[0-9]{3}$")
+	return r.MatchString(filepath.Base(filePath))
 }

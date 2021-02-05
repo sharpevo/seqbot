@@ -99,6 +99,10 @@ func (w *WatchCommand) watch() error {
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					f, _ := os.Stat(event.Name)
 					if f.Mode().IsDir() {
+						if util.IsArchiveDir(event.Name) {
+							logrus.Infof("ignore archive directory: %s", event.Name)
+							continue
+						}
 						watcher.Add(event.Name)
 						logrus.Infof("watching directory: %s", event.Name)
 						continue
@@ -148,6 +152,10 @@ func (w *WatchCommand) watch() error {
 				return err
 			}
 			if info.Mode().IsDir() {
+				if util.IsArchiveDir(p) {
+					logrus.Infof("ignore archive directory: %s", p)
+					return nil
+				}
 				watcher.Add(p)
 				logrus.Infof("watching directory: %s", p)
 			}
