@@ -1,10 +1,12 @@
 package util
 
-import "fmt"
+import (
+	"bytes"
+)
 
 type Message struct {
 	sep string
-	msg string
+	msg bytes.Buffer
 }
 
 func NewMessage(sep string) *Message {
@@ -12,9 +14,10 @@ func NewMessage(sep string) *Message {
 }
 
 func (m *Message) Add(msg string) {
-	m.msg = fmt.Sprintf("%s%s%s", m.msg, m.sep, msg)
+	m.msg.WriteString(m.sep)
+	m.msg.WriteString(msg)
 }
 
 func (m *Message) String() string {
-	return m.msg
+	return m.msg.String()
 }
