@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	mgiOptions "github.com/sharpevo/seqbot/cmd/MGISEQ-2000/app/options"
 	"github.com/sharpevo/seqbot/cmd/options"
@@ -76,9 +77,17 @@ func (w *WatchCommand) Execute() error {
 	if err := w.validate(); err != nil {
 		return err
 	}
-	logrus.Info("watching started")
 	defer logrus.Info("watching done")
-	return w.watch()
+	switch w.option.Adapter {
+	case mgiOptions.ADAPTER_INOTIFY:
+		logrus.Info("watching started")
+		return w.watch()
+	case mgiOptions.ADAPTER_SCAN:
+		logrus.Info("scanning started")
+		return w.scan()
+	default:
+		return fmt.Errorf("invalid adapter")
+	}
 }
 
 func (w *WatchCommand) watch() error {
@@ -138,6 +147,58 @@ func (w *WatchCommand) watch() error {
 	return nil
 }
 
+type seenMap map[string]struct{}
+
+func (s seenMap) addFile(filePath string) bool {
+	key := filepath.Base(filePath)
+	_, ok := s[key]
+	if !ok {
+		s[key] = struct{}{}
+		logrus.Infof("seen %s", key)
+	}
+	return !ok
+}
+
+func (w *WatchCommand) scan() error {
+	seen := seenMap{}
+	err := filepath.Walk(
+		w.option.DataPath,
+		func(p string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.Mode().IsDir() {
+				return nil
+			}
+			seen.addFile(p)
+			return nil
+		},
+	)
+	if err != nil {
+		return err
+	}
+	for {
+		err := filepath.Walk(
+			w.option.DataPath,
+			func(p string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if info.Mode().IsDir() {
+					return nil
+				}
+				if seen.addFile(p) {
+					w.process(p)
+				}
+				return nil
+			})
+		if err != nil {
+			logrus.Errorf(
+				"failed to scan %s: %v", w.option.DataPath, err)
+		}
+		time.Sleep(time.Duration(w.option.ScanInterval) * time.Second)
+	}
+}
 
 func (w *WatchCommand) process(filePath string) {
 	success, err := w.Sequencer().IsSuccess(filePath)
