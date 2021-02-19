@@ -207,7 +207,7 @@ func (w *WatchCommand) process(filePath string) {
 		return
 	}
 	if !success {
-		logrus.Infof("ignore event: %s", filePath)
+		logrus.Debugf("ignore event: %s", filePath)
 		return
 	}
 	slide, err := w.Sequencer().GetSlide(filePath)
