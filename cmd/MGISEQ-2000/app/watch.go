@@ -107,34 +107,7 @@ func (w *WatchCommand) watch() error {
 						logrus.Infof("watching directory: %s", event.Name)
 						continue
 					}
-					success, err := w.Sequencer().IsSuccess(event.Name)
-					if err != nil {
-						logrus.Errorf(
-							"failed to check success %s: %v", event.Name, err)
-						continue
-					}
-					if !success {
-						logrus.Infof("ignore event: %s", event.Name)
-						continue
-					}
-					slide, err := w.Sequencer().GetSlide(event.Name)
-					if err != nil {
-						logrus.Errorf("failed to parse slide: %s", event.Name)
-						continue
-					}
-					msg := util.NewMessage("\n")
-					for _, a := range w.actions {
-						output, err := a.Run(event.Name, w)
-						if err != nil {
-							logrus.Errorf("failed to run '%s' on '%s': %v",
-								a.Name(), slide, err)
-						} else {
-							logrus.Infof("action '%s' on '%s' success: %s",
-								a.Name(), slide, output)
-						}
-						msg.Add(output)
-					}
-					w.send(msg.String())
+					w.process(event.Name)
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
@@ -163,6 +136,38 @@ func (w *WatchCommand) watch() error {
 		})
 	<-done
 	return nil
+}
+
+
+func (w *WatchCommand) process(filePath string) {
+	success, err := w.Sequencer().IsSuccess(filePath)
+	if err != nil {
+		logrus.Errorf("failed to check success %s: %v", filePath, err)
+		return
+	}
+	if !success {
+		logrus.Infof("ignore event: %s", filePath)
+		return
+	}
+	slide, err := w.Sequencer().GetSlide(filePath)
+	if err != nil {
+		logrus.Errorf("failed to parse slide: %s", filePath)
+		return
+	}
+	msg := util.NewMessage("\n")
+	for _, a := range w.actions {
+		output, err := a.Run(filePath, w)
+		if err != nil {
+			logrus.Errorf("failed to run '%s' on '%s': %v",
+				a.Name(), slide, err)
+		} else {
+			logrus.Infof("action '%s' on '%s' success: %s",
+				a.Name(), slide, output)
+		}
+		msg.Add(output)
+	}
+	w.send(msg.String())
+	return
 }
 
 func (w *WatchCommand) send(message string) {
