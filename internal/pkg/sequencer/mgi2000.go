@@ -71,6 +71,28 @@ func (m *Mgiseq2000) GetWfqTime(successPath string) (string, error) {
 	return "", nil
 }
 
+func (m *Mgiseq2000) GetUploadTime(successPath string) (string, error) {
+	info, err := os.Stat(successPath)
+	if err != nil {
+		return "", err
+	}
+	latest := info.ModTime()
+	earliest := latest
+	err = filepath.Walk(
+		filepath.Dir(successPath),
+		func(p string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.ModTime().Before(earliest) {
+				earliest = info.ModTime()
+			}
+			return nil
+		},
+	)
+	return fmt.Sprintf("%v", latest.Sub(earliest).Round(time.Second)), err
+}
+
 func (m *Mgiseq2000) IsSuccess(filePath string) (bool, error) {
 	lastDir := filepath.Base(filepath.Dir(filePath))
 	r := regexp.MustCompile(fmt.Sprintf(TMPL_SUCCESS, lastDir))
