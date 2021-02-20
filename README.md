@@ -14,4 +14,5 @@ MGISEQ-2000
 seqbot run -flagpath=/path/to/success.txt -dingtoken=token1 -actionarchive=false
 seqbot send -msgfile=message.md -dingtoken=token1
 seqbot watch -debug -data=/path/to/rsyncd -dingtoken=token1 -dingtoken=token2
+seqbot watch -debug -data=/path/to/samba -dingtoken=token1 -dingtoken=token2 -adapter=scan -interval=300
 ```
