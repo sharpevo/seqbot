@@ -6,5 +6,6 @@ type SequencerInterface interface {
 	GetArchiveDir(string) (string, error)
 	GetResultDir(string) (string, error)
 	GetWfqTime(string) (string, error)
+	GetUploadTime(string) (string, error)
 	IsSuccess(string) (bool, error)
 }

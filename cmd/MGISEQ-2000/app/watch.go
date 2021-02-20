@@ -61,6 +61,7 @@ func (w *WatchCommand) validate() error {
 	w.actions = []action.ActionInterface{
 		&action.BarcodeAction{},
 		&action.SlideAction{},
+		&action.UploadTimeAction{},
 	}
 	if w.actionOption.ActionArchive {
 		archiveAction := &action.ArchiveAction{}
