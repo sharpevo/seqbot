@@ -70,7 +70,7 @@ func (t *Mgi2000Command) Usage() {
 Commands:
   run: run actions.
   send: send messages.
-  watch: watch WFQLog, take actions and send messages.
+  watch: watch flag file, take actions and send messages.
 
 Use "%s <command> -h" for more information about a given command.
 
