@@ -52,15 +52,16 @@ func (r *RunCommand) validate() error {
 		&action.BarcodeAction{},
 		&action.SlideAction{},
 	}
-	if r.actionOption.ActionWfqTime {
-		wfqTimeAction := &action.WfqTimeAction{}
-		r.actions = append(r.actions, wfqTimeAction)
-		logrus.Infof("add action %s", wfqTimeAction.Name())
+	actions, err := r.actionOption.Actions()
+	if err != nil {
+		return err
 	}
-	if r.actionOption.ActionArchive {
-		archiveAction := &action.ArchiveAction{}
-		r.actions = append(r.actions, archiveAction)
-		logrus.Infof("add action %s", archiveAction.Name())
+	for _, a := range actions {
+		r.actions = append(r.actions, a)
+		logrus.Infof("add action %s", a.Name())
+	}
+	if r.debugOption.Debug {
+		logrus.SetLevel(logrus.DebugLevel)
 	}
 	return nil
 }
