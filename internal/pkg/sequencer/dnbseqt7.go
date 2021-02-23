@@ -2,6 +2,7 @@ package sequencer
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -55,7 +56,25 @@ func (d *Dnbseqt7) GetWfqTime(flagPath string) (string, error) {
 }
 
 func (d *Dnbseqt7) GetUploadTime(flagPath string) (string, error) {
-	return "-", nil
+	info, err := os.Stat(flagPath)
+	if err != nil {
+		return "", nil
+	}
+	latest := info.ModTime()
+	earliest := latest
+	err = filepath.Walk(
+		getResultDirFromFlagPath(flagPath),
+		func(p string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.ModTime().Before(earliest) {
+				earliest = info.ModTime()
+			}
+			return nil
+		},
+	)
+	return fmt.Sprintf("%v", latest.Sub(earliest).Round(time.Second)), err
 }
 
 func (d *Dnbseqt7) IsSuccess(flagPath string) (bool, error) {
