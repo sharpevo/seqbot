@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sharpevo/seqbot/pkg/util"
+	"github.com/sharpevo/seqbot/cmd/send/app"
 )
 
 const (
@@ -51,7 +51,7 @@ func (m *Mgi2000Command) Execute() error {
 		}
 		return runCommand.Execute()
 	case CMD_SEND:
-		sendCommand := util.NewSendCommand(sendFlagSet)
+		sendCommand := app.NewSendCommand(sendFlagSet)
 		if err := sendFlagSet.Parse(os.Args[2:]); err != nil {
 			sendFlagSet.PrintDefaults()
 			return err
