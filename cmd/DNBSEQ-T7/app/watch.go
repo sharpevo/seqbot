@@ -66,15 +66,13 @@ func (w *WatchCommand) validate() error {
 		&action.BarcodeAction{},
 		&action.SlideAction{},
 	}
-	if w.actionOption.ActionWfqTime {
-		wfqTimeAction := &action.WfqTimeAction{}
-		w.actions = append(w.actions, wfqTimeAction)
-		logrus.Infof("add action %s", wfqTimeAction.Name())
+	actions, err := w.actionOption.Actions()
+	if err != nil {
+		return err
 	}
-	if w.actionOption.ActionArchive {
-		archiveAction := &action.ArchiveAction{}
-		w.actions = append(w.actions, archiveAction)
-		logrus.Infof("add action %s", archiveAction.Name())
+	for _, a := range actions {
+		w.actions = append(w.actions, a)
+		logrus.Infof("add action %s", a.Name())
 	}
 	if w.debugOption.Debug {
 		logrus.SetLevel(logrus.DebugLevel)
