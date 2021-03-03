@@ -114,6 +114,7 @@ func (w *WatchCommand) scan() error {
 	}
 	logrus.Infof("scanning initialized")
 	for {
+		time.Sleep(time.Duration(w.option.ScanInterval) * time.Second)
 		err := filepath.Walk(
 			w.option.DataPath,
 			w.checkDir(seen, w.process),
@@ -122,7 +123,6 @@ func (w *WatchCommand) scan() error {
 			logrus.Errorf(
 				"failed to scan %s: %v", w.option.DataPath, err)
 		}
-		time.Sleep(time.Duration(w.option.ScanInterval) * time.Second)
 	}
 }
 
