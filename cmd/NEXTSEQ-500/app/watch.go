@@ -112,6 +112,7 @@ func (w *WatchCommand) scan() error {
 	if err != nil {
 		return err
 	}
+	logrus.Infof("scanning initialized")
 	for {
 		err := filepath.Walk(
 			w.option.DataPath,
@@ -170,22 +171,26 @@ func (w *WatchCommand) checkDir(seen seenMap, process func(string)) filepath.Wal
 		if err != nil {
 			return err
 		}
-		if info.Mode().IsDir() {
-			if util.IsArchiveDir(p) {
-				logrus.Debugf("ignore archive directory: %s", p)
-				return filepath.SkipDir
-			}
+		if !info.IsDir() {
+			return nil
+		}
+		if util.IsArchiveDir(p) {
+			logrus.Debugf("ignore archive dir: %s", p)
+			return filepath.SkipDir
+		}
+		successFilePath := filepath.Join(p, sequencer.FILE_RUN_COMPLETION)
+		if _, err := os.Stat(successFilePath); os.IsNotExist(err) {
 			logrus.Debugf("ignore dir: %s", p)
 			return nil
 		}
-		success, err := w.Sequencer().IsSuccess(p)
+		success, err := w.Sequencer().IsSuccess(successFilePath)
 		if err != nil || !success {
 			logrus.Debugf("ignore file: %s (%v)", p, err)
 			return nil
 		}
-		if seen.addFile(p) && process != nil {
-			process(p)
+		if seen.addFile(successFilePath) && process != nil {
+			process(successFilePath)
 		}
-		return nil
+		return filepath.SkipDir
 	}
 }
