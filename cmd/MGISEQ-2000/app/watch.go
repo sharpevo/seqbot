@@ -166,16 +166,7 @@ func (w *WatchCommand) scan() error {
 	seen := seenMap{}
 	err := filepath.Walk(
 		w.option.DataPath,
-		func(p string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if info.Mode().IsDir() {
-				return nil
-			}
-			seen.addFile(p)
-			return nil
-		},
+		w.checkDir(seen, nil),
 	)
 	if err != nil {
 		return err
@@ -183,18 +174,8 @@ func (w *WatchCommand) scan() error {
 	for {
 		err := filepath.Walk(
 			w.option.DataPath,
-			func(p string, info os.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-				if info.Mode().IsDir() {
-					return nil
-				}
-				if seen.addFile(p) {
-					w.process(p)
-				}
-				return nil
-			})
+			w.checkDir(seen, w.process),
+		)
 		if err != nil {
 			logrus.Errorf(
 				"failed to scan %s: %v", w.option.DataPath, err)
@@ -250,4 +231,24 @@ func (w *WatchCommand) send(message string) {
 
 func (w *WatchCommand) Sequencer() sequencer.SequencerInterface {
 	return w.sequencer
+}
+
+func (w *WatchCommand) checkDir(seen seenMap, process func(string)) filepath.WalkFunc {
+	return func(p string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			if util.IsArchiveDir(p) {
+				logrus.Debugf("ignore archive dir: %s", p)
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if seen.addFile(p) && process != nil {
+			process(p)
+			return filepath.SkipDir
+		}
+		return nil
+	}
 }
