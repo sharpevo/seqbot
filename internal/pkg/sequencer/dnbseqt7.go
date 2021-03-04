@@ -62,8 +62,10 @@ func (d *Dnbseqt7) GetUploadTime(flagPath string) (string, error) {
 	}
 	latest := info.ModTime()
 	earliest := latest
+	resultRootPath := getResultDirFromFlagPath(flagPath)
+	resultPath := filepath.Join(resultRootPath, parseSlideFromFlag(flagPath))
 	err = filepath.Walk(
-		getResultDirFromFlagPath(flagPath),
+		resultPath,
 		func(p string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
