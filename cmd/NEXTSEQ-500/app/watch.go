@@ -3,6 +3,7 @@ package app
 import (
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -105,7 +106,7 @@ func (s seenMap) addFile(filePath string) bool {
 
 func (w *WatchCommand) scan() error {
 	seen := seenMap{}
-	err := filepath.Walk(
+	err := filepath.WalkDir(
 		w.option.DataPath,
 		w.checkDir(seen, nil),
 	)
@@ -115,7 +116,7 @@ func (w *WatchCommand) scan() error {
 	logrus.Infof("scanning initialized")
 	for {
 		time.Sleep(time.Duration(w.option.ScanInterval) * time.Second)
-		err := filepath.Walk(
+		err := filepath.WalkDir(
 			w.option.DataPath,
 			w.checkDir(seen, w.process),
 		)
@@ -166,12 +167,12 @@ func (w *WatchCommand) Sequencer() sequencer.SequencerInterface {
 	return w.sequencer
 }
 
-func (w *WatchCommand) checkDir(seen seenMap, process func(string)) filepath.WalkFunc {
-	return func(p string, info os.FileInfo, err error) error {
+func (w *WatchCommand) checkDir(seen seenMap, process func(string)) fs.WalkDirFunc {
+	return func(p string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if !info.IsDir() {
+		if !d.IsDir() {
 			return nil
 		}
 		if util.IsArchiveDir(p) {

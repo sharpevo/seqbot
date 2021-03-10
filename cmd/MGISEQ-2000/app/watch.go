@@ -3,6 +3,7 @@ package app
 import (
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -130,13 +131,13 @@ func (w *WatchCommand) watch() error {
 		}
 	}()
 
-	err = filepath.Walk(
+	err = filepath.WalkDir(
 		w.option.DataPath,
-		func(p string, info os.FileInfo, err error) error {
+		func(p string, d os.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
-			if info.Mode().IsDir() {
+			if d.IsDir() {
 				if util.IsArchiveDir(p) {
 					logrus.Infof("ignore archive directory: %s", p)
 					return nil
@@ -164,7 +165,7 @@ func (s seenMap) addFile(filePath string) bool {
 
 func (w *WatchCommand) scan() error {
 	seen := seenMap{}
-	err := filepath.Walk(
+	err := filepath.WalkDir(
 		w.option.DataPath,
 		w.checkDir(seen, nil),
 	)
@@ -173,7 +174,7 @@ func (w *WatchCommand) scan() error {
 	}
 	for {
 		time.Sleep(time.Duration(w.option.ScanInterval) * time.Second)
-		err := filepath.Walk(
+		err := filepath.WalkDir(
 			w.option.DataPath,
 			w.checkDir(seen, w.process),
 		)
@@ -233,12 +234,12 @@ func (w *WatchCommand) Sequencer() sequencer.SequencerInterface {
 	return w.sequencer
 }
 
-func (w *WatchCommand) checkDir(seen seenMap, process func(string)) filepath.WalkFunc {
-	return func(p string, info os.FileInfo, err error) error {
+func (w *WatchCommand) checkDir(seen seenMap, process func(string)) fs.WalkDirFunc {
+	return func(p string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if info.IsDir() {
+		if d.IsDir() {
 			if util.IsArchiveDir(p) {
 				logrus.Debugf("ignore archive dir: %s", p)
 				return filepath.SkipDir
