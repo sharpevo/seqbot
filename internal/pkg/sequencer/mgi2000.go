@@ -56,6 +56,10 @@ func (m *Mgiseq2000) GetSlide(successPath string) (string, error) {
 	return filepath.Base(filepath.Dir(successPath)), nil
 }
 
+func (m *Mgiseq2000) GetExtraExperimentInfo(successPath string) (string, error) {
+	return "", fmt.Errorf("extra info for mgi2000 has not been implemented")
+}
+
 func (m *Mgiseq2000) GetArchiveDir(successPath string) (string, error) {
 	return filepath.Join(
 		filepath.Dir(filepath.Dir(successPath)),

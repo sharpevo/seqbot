@@ -11,6 +11,7 @@ const (
 	OPTION_ACTION_ARCHIVE    = "archive"
 	OPTION_ACTION_WFQTIME    = "wfqtime"
 	OPTION_ACTION_UPLOADTIME = "uploadtime"
+	OPTION_ACTION_EXTRA      = "misc"
 )
 
 type ActionOptions struct {
@@ -37,6 +38,8 @@ func (o *ActionOptions) Actions() ([]action.ActionInterface, error) {
 			actions = append(actions, &action.WfqTimeAction{})
 		case OPTION_ACTION_UPLOADTIME:
 			actions = append(actions, &action.UploadTimeAction{})
+		case OPTION_ACTION_EXTRA:
+			actions = append(actions, &action.ExtraAction{})
 		default:
 			return actions, fmt.Errorf("invalid action '%s'", a)
 		}

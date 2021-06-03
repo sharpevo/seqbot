@@ -17,7 +17,12 @@ const (
 	PATH_RESULT = "result/OutputFq/upload"
 	PATH_FLAG   = "flag"
 
-	ATTR_BARCODE_TYPE = "Barcode Type"
+	ATTR_BARCODE_TYPE  = "Barcode Type"
+	ATTR_SEQUENCE_TYPE = "Sequence Type"
+	ATTR_DUAL_BARCODE  = "Dual Barcode"
+
+	VALUE_BARCODE_SINGLE = "single"
+	VALUE_BARCODE_DUAL   = "dual"
 )
 
 type Dnbseqt7 struct{}
@@ -33,6 +38,20 @@ func (d *Dnbseqt7) GetBarcode(flagPath string) (string, error) {
 func (d *Dnbseqt7) GetSlide(flagPath string) (string, error) {
 	return parseSlideFromFlag(flagPath), nil
 }
+
+func (d *Dnbseqt7) GetExtraExperimentInfo(flagPath string) (string, error) {
+	f, err := readFlag(flagPath)
+	if err != nil {
+		return "", err
+	}
+	sequenceType := f.sequenceType()
+	dualBarcode := VALUE_BARCODE_SINGLE
+	if f.dualBarcode() != "0" {
+		dualBarcode = VALUE_BARCODE_DUAL
+	}
+	return fmt.Sprintf("%s, %s", sequenceType, dualBarcode), nil
+}
+
 func (d *Dnbseqt7) GetResultDir(flagPath string) (string, error) {
 	return filepath.Join(
 		getResultDirFromFlagPath(flagPath),
@@ -99,8 +118,20 @@ type FlagJson struct {
 }
 
 func (f *FlagJson) barcodeType() string {
+	return f.get(ATTR_BARCODE_TYPE)
+}
+
+func (f *FlagJson) sequenceType() string {
+	return f.get(ATTR_SEQUENCE_TYPE)
+}
+
+func (f *FlagJson) dualBarcode() string {
+	return f.get(ATTR_DUAL_BARCODE)
+}
+
+func (f *FlagJson) get(attrName string) string {
 	for _, e := range f.ExperimentInfoVec {
-		if e[0] == ATTR_BARCODE_TYPE {
+		if e[0] == attrName {
 			return e[1]
 		}
 	}
