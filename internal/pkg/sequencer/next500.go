@@ -39,6 +39,10 @@ func (n *Nextseq500) GetArchiveDir(successPath string) (string, error) {
 	return "", fmt.Errorf("archive not supported for NextSeq 500")
 }
 
+func (n *Nextseq500) GetExtraExperimentInfo(successPath string) (string, error) {
+	return "", fmt.Errorf("extra info for next500 has not been implemented")
+}
+
 func (n *Nextseq500) GetResultDir(successPath string) (string, error) {
 	return filepath.Dir(successPath), nil
 }
